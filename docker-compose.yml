@@ -1,0 +1,79 @@
+version: "3.9"
+services:
+  mysql:
+    build:
+      context: ./
+      dockerfile: ./mysql/Dockerfile
+    container_name: ${APP_NAME}_db
+    #    command: --default-authentication-plugin=mysql_native_password
+    #    ports:
+    #      - "3306:3306"
+    restart: unless-stopped
+    volumes:
+      - dbdata:/var/lib/mysql
+      - ./mysql/dumps:/dumps
+    #      - ./mysql/dumps:/docker-entrypoint-initdb.d
+    #      - ./database/mysql:/var/lib/mysql
+    #      - ./mysql/my.cnf:/etc/mysql/my.cnf
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      MYSQL_ROOT_HOST: "%"
+    networks:
+      laravel-network:
+
+  phpmyadmin:
+    build:
+      context: ./
+      dockerfile: ./phpmyadmin/Dockerfile
+    container_name: ${APP_NAME}_phpmyadmin
+    depends_on:
+      - mysql
+    restart: unless-stopped
+    ports:
+      - '8060:80'
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_ARBITRARY: 1
+    networks:
+      - laravel-network
+
+  backend:
+    build:
+      args:
+        user: ${APP_NAME}
+        uid: 1000
+      context: ./
+      dockerfile: ./backend/Dockerfile
+    container_name: ${APP_NAME}_backend
+    restart: always
+    working_dir: /var/www
+    volumes:
+      - ${APP_PATH}/:/var/www
+    networks:
+      - laravel-network
+
+  nginx:
+    build:
+      context: ./
+      dockerfile: ./nginx/Dockerfile
+    container_name: ${APP_NAME}_nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ${APP_PATH}/:/var/www
+      - ./nginx/conf.d/:/etc/nginx/conf.d/
+      - ./nginx/log:/var/log/nginx
+    depends_on:
+      - phpmyadmin
+      - backend
+    networks:
+      - laravel-network
+
+networks:
+  laravel-network:
+    driver: bridge
+
+volumes:
+  dbdata:
+    driver: local
