@@ -17,12 +17,6 @@ endef
 define sql_create
 	echo ""
 endef
-echo:
-	echo $(call DB_PORT)
-	echo 'backend: '$(call backend_ip);
-	echo 'phpmyadmin: '$(call phpmyadmin_ip);
-	echo 'mysql: '$(call mysql_id);
-	echo 'nginx: '$(call nginx_ip);
 
 up:
 	docker-compose up -d
@@ -38,29 +32,12 @@ build:
 	make set_hosts
 	make laravel_init
 
-init:
-#	sudo sed -i 's/APP_URL=http://jedidesk.local/APP_URL=http://jedidesk.localhost/' $(call APP_PATH)/.env
-#	sudo sed -i '/APP_URL=http/d' $(call APP_PATH)/.env
-#	echo "APP_URL=http://jedidesk.locallll" | sudo tee --append $(call APP_PATH)/.env
-#	sudo sed -i '/kameron.test/d' /etc/hosts
-#	echo $(call nginx_ip)" kameron.test" | sudo tee --append /etc/hosts
-	docker exec -it jedidesk_backend bash -c "php artisan key:generate" www-data
-	docker exec -it jedidesk_backend bash -c "php artisan storage:link" www-data
-	docker exec -it jedidesk_backend bash -c "chmod -R 777 storage" www-data
-	docker exec -it jedidesk_backend bash -c "chmod -R 777 bootstrap/cache" www-data
-	docker exec -it jedidesk_backend bash -c "chmod -R 777 public/app-assets" www-data
-	docker exec -it jedidesk_backend bash -c "php artisan view:clear" www-data
-	docker exec -it jedidesk_backend bash -c "php artisan cache:clear" www-data
-	docker exec -it jedidesk_backend bash -c "php artisan route:clear" www-data
-	#docker exec -it jedidesk_nginx bash -c "systemctl restart nginx" www-data
-	docker exec -it jedidesk_nginx nginx -s reload
-
 laravel_init:
 	docker exec -it $(call APP_NAME)"_backend" bash -c "composer install" www-data
 	docker exec -it $(call APP_NAME)"_backend" bash -c "php artisan key:generate" www-data
-#	docker exec -it $(call APP_NAME)"_backend" bash -c "php artisan storage:link" www-data
-#	docker exec -it $(call APP_NAME)"_backend" bash -c "chmod -R 777 storage" www-data
-#	docker exec -it $(call APP_NAME)"_backend" bash -c "chmod -R 777 bootstrap/cache" www-data
+	docker exec -it $(call APP_NAME)"_backend" bash -c "php artisan storage:link" www-data
+	docker exec -it $(call APP_NAME)"_backend" bash -c "chmod -R 777 storage" www-data
+	docker exec -it $(call APP_NAME)"_backend" bash -c "chmod -R 777 bootstrap/cache" www-data
 
 clone_project:
 	sudo rm -rf $(call APP_PATH)
@@ -90,3 +67,6 @@ set_hosts:
 	echo $(call nginx_ip)" "$(call BACKEND_HOST) | sudo tee --append /etc/hosts;
 	sudo sed -i "/"$(call PHPMYADMIN_HOST)"/d" /etc/hosts;
 	echo $(call phpmyadmin_ip)" "$(call PHPMYADMIN_HOST) | sudo tee --append /etc/hosts;
+
+nginx-reload:
+	docker exec -it jedidesk_nginx nginx -s reload
