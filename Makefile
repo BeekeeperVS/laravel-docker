@@ -14,9 +14,6 @@ endef
 define phpmyadmin_ip
 	$$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' jedidesk_phpmyadmin)
 endef
-define sql_create
-	echo ""
-endef
 
 up:
 	docker-compose up -d
