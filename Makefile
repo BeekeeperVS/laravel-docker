@@ -16,6 +16,7 @@ define phpmyadmin_ip
 endef
 
 up:
+	docker stop $$(docker ps -aq)
 	docker-compose up -d
 
 stop:
